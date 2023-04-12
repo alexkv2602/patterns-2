@@ -1,18 +1,24 @@
-image: Ubuntu  # образ для сборки
+image: Ubuntu
 
-stack: jdk 11  # версия JDK
+stack: jdk11
 
 branches:
   only:
-    - master  # ветка git
+    - master
 
-build: off  # будем использовать свой скрипт сборки
-
-install:
-  # запускаем SUT (& означает, что в фоновом режиме не блокируем терминал для запуска тестов)
-  - java -jar ./artifacts/app-ibank.jar -P:profile=test &
-  - chmod +x gradlew
+before_build:
+  # Установка JDK и Gradle
+  - apt-get update
+  - apt-get install -y openjdk-11-jdk
+  - wget https://services.gradle.org/distributions/gradle-7.2-bin.zip
+  - unzip -qq gradle-7.2-bin.zip
+  - export PATH=$PATH:`pwd`/gradle-7.2/bin
 
 build_script:
-  - java -jar ./artifacts/app-ibank.jar -P:profile=test &
-  - ./gradlew test --info -Dselenide.headless=true # запускаем тест, флаг --info позволяет выводить больше информации
+  # Сборка проекта и запуск SUT
+  - gradle build
+  - java -jar ./build/libs/app-ibank.jar -P:profile=test &
+
+test_script:
+  # Запуск тестов
+  - gradle test --info -Dselenide.headless=true
